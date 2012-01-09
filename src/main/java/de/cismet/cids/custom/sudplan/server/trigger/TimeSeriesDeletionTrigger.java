@@ -33,7 +33,7 @@ import de.cismet.cids.trigger.CidsTriggerKey;
 
 /**
  * TimeSeriesDeletionTrigger deletes TimeSeries files (aggregated and "original") located on the WebDAV. If the deletion
- * of the remote files fails, the deletion of the deletion of this TimeSeries is aborted.
+ * of the remote files fails, the deletion of this TimeSeries object is aborted.
  *
  * @author   Benjamin Friedrich (benjamin.friedrich@cismet.de)
  * @version  1.0, 04.01.2012
@@ -178,7 +178,7 @@ public class TimeSeriesDeletionTrigger extends AbstractCidsTrigger {
 
     @Override
     public CidsTriggerKey getTriggerKey() {
-        return CidsTriggerKey.FORALL;
+        return new CidsTriggerKey(CidsTriggerKey.ALL, "TIMESERIES"); // NOI18N
     }
 
     /**
