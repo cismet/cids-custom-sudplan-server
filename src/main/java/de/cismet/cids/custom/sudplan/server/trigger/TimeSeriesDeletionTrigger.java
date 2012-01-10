@@ -46,7 +46,7 @@ public class TimeSeriesDeletionTrigger extends AbstractCidsTrigger {
     public static final String DAV_HOST = "http://sudplan.cismet.de/tsDav/";
     public static final Credentials CREDS = new UsernamePasswordCredentials("tsDav", "RHfio2l4wrsklfghj");
 
-    private static final String REGEX = "^dav:(.+)\\?.+$";
+    private static final String REGEX = "^dav:.+\\?.*ts:offering=(.+_unknown).*$";
 
     private static final Logger LOG = Logger.getLogger(TimeSeriesDeletionTrigger.class);
 
@@ -150,13 +150,20 @@ public class TimeSeriesDeletionTrigger extends AbstractCidsTrigger {
             LOG.debug("Entering beforeDelete(CidsBean, User) with cidsBean=" + cidsBean + " user=" + user);
         }
 
+        if (!"TIMESERIES".equalsIgnoreCase(cidsBean.getMetaObject().getMetaClass().getTableName())) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Leaving beforeDelete(CidsBean, User) as cidsBean " + cidsBean
+                            + " does not represent a TimeSeries");
+            }
+            return;
+        }
+
         String uri = (String)cidsBean.getProperty("uri");
 
         final Matcher m = this.pattern.matcher(uri);
-
         if (m.matches()) {
-            uri = m.group(1);
-
+            // group(1) = file name
+            uri = DAV_HOST + m.group(1);
             final HttpClient client = this.createHttpClient();
             this.delete(uri, client);                                // delete TimeSeries file
             this.delete(uri.replace("_unknown", "_86400s"), client); // delete aggregated version of TimeSeries file
@@ -178,7 +185,7 @@ public class TimeSeriesDeletionTrigger extends AbstractCidsTrigger {
 
     @Override
     public CidsTriggerKey getTriggerKey() {
-        return new CidsTriggerKey(CidsTriggerKey.ALL, "TIMESERIES"); // NOI18N
+        return CidsTriggerKey.FORALL; // new CidsTriggerKey(CidsTriggerKey.ALL, "TIMESERIES"); // NOI18N
     }
 
     /**
