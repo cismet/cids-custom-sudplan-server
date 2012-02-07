@@ -18,6 +18,8 @@ import org.apache.log4j.Logger;
 
 import java.rmi.RemoteException;
 
+import java.text.DecimalFormat;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -34,66 +36,40 @@ import de.cismet.cids.custom.sudplan.commons.SudplanConcurrency;
  * @author   pd
  * @version  $Revision$, $Date$
  */
-public class EtaResultSearch extends CidsServerSearch {
+public class CsoByOverflowSearch extends CidsServerSearch {
 
     //~ Static fields/initializers ---------------------------------------------
 
-    private static final transient Logger LOG = Logger.getLogger(EtaResultSearch.class);
-    private static final String STMT_TEST_SUDPLAN_SYSTEM = "SELECT e.id, r.id, s.id "
-                + "FROM linz_eta_result e, run r, linz_swmm_run s "
+    private static final transient Logger LOG = Logger.getLogger(CsoByOverflowSearch.class);
+    private static final String STMT_TEST_SUDPLAN_SYSTEM = "SELECT c.id, r.id, s.id "
+                + "FROM linz_cso c, run r, linz_swmm_result s "
                 + "LIMIT 1";
-    private static final String STMT_ETA_RESULT_TEMPLATE =
-        "SELECT DISTINCT ETA_RESULT.eta_scenario_id from \"public\".linz_eta_result ETA_RESULT, \"public\".linz_swmm_run SWMM_RUN "
-                + "WHERE SWMM_RUN.swmm_scenario = ETA_RESULT.swmm_scenario_id "
-                + "AND SWMM_RUN.swmm_project_reference = ";
-    private static final String STMT_ETA_HYD_CLAUSE = " AND ETA_RESULT.eta_hyd_actual >= ETA_RESULT.eta_hyd_required ";
-    private static final String STMT_ETA_SED_CLAUSE = " AND  ETA_RESULT.eta_sed_actual >= ETA_RESULT.eta_sed_required ";
-    public static final int NONE = 0;
-    public static final int ETA_HYD = 1;
-    public static final int ETA_SED = 2;
+    private static final String STMT_CSO_BY_OVERFLOW_TEMPLATE = "SELECT CSO.id FROM \"public\".linz_cso AS CSO "
+                + "JOIN \"public\".linz_swmm_scenarios AS SWMM_RUN ON CSO.id = SWMM_RUN.linz_cso_reference "
+                + "JOIN \"public\".linz_swmm_result AS SWMM_RESULT ON SWMM_RESULT.id = SWMM_RUN.linz_swmm_result "
+                + "AND SWMM_RESULT.overflow_frequency <= %OVERFLOW% "
+                + "AND SWMM_RESULT.swmm_scenario_id = ";
     public static final String DOMAIN = "SUDPLAN";
 
     //~ Instance fields --------------------------------------------------------
 
-    private final String etaResultStatement;
+    protected String searchName = "cso-by-overflow-search";
+
+    private final String csosWithoutOverflowStatement;
 
     //~ Constructors -----------------------------------------------------------
 
     /**
      * Creates a new CsosWithoutOverflowSearch object.
      *
-     * @param  swmmProjectId  swmmRunId DOCUMENT ME!
-     * @param  etaParameter   DOCUMENT ME!
+     * @param  swmmRunId       DOCUMENT ME!
+     * @param  overflowVolume  DOCUMENT ME!
      */
-    public EtaResultSearch(final int swmmProjectId, final int etaParameter) {
-        switch (etaParameter) {
-            case ETA_HYD: {
-                etaResultStatement = STMT_ETA_RESULT_TEMPLATE
-                            + swmmProjectId
-                            + STMT_ETA_HYD_CLAUSE;
-                break;
-            }
-            case ETA_SED: {
-                etaResultStatement = STMT_ETA_RESULT_TEMPLATE
-                            + swmmProjectId
-                            + STMT_ETA_SED_CLAUSE;
-                break;
-            }
-
-            case ETA_HYD
-                    + ETA_SED: {
-                etaResultStatement = STMT_ETA_RESULT_TEMPLATE
-                            + swmmProjectId
-                            + STMT_ETA_HYD_CLAUSE
-                            + STMT_ETA_SED_CLAUSE;
-                break;
-            }
-
-            default: {
-                etaResultStatement = STMT_ETA_RESULT_TEMPLATE
-                            + swmmProjectId;
-            }
-        }
+    public CsoByOverflowSearch(final int swmmRunId, final float overflowVolume) {
+        csosWithoutOverflowStatement = (STMT_CSO_BY_OVERFLOW_TEMPLATE.replace(
+                    "%OVERFLOW%",
+                    new DecimalFormat("##.##").format(overflowVolume)))
+                    + swmmRunId;
     }
 
     //~ Methods ----------------------------------------------------------------
@@ -101,16 +77,16 @@ public class EtaResultSearch extends CidsServerSearch {
     @Override
     public Collection performServerSearch() {
         final ExecutorService searcher = Executors.newCachedThreadPool(
-                SudplanConcurrency.createThreadFactory("eta-result-search")); // NOI18N
+                SudplanConcurrency.createThreadFactory(searchName)); // NOI18N
 
         final Map map = getActiveLoaclServers();
-        final ArrayList<EtaResultSearch.EtaResultFetcher> fetchers = new ArrayList<EtaResultSearch.EtaResultFetcher>(
+        final ArrayList<CsoByOverflowSearch.CsoFetcher> fetchers = new ArrayList<CsoByOverflowSearch.CsoFetcher>(
                 map.size());
         for (final Object o : map.keySet()) {
             final String domain = (String)o;
             final MetaService ms = (MetaService)map.get(domain);
 
-            final EtaResultSearch.EtaResultFetcher fetcher = new EtaResultSearch.EtaResultFetcher(ms, domain);
+            final CsoByOverflowSearch.CsoFetcher fetcher = new CsoByOverflowSearch.CsoFetcher(ms, domain);
             // keep track of the fetchers since we want to know the results afterwards
             fetchers.add(fetcher);
             // we don't need the future since we'return going to shutdown the service anyway
@@ -131,20 +107,20 @@ public class EtaResultSearch extends CidsServerSearch {
             return null;
         }
 
-        final ArrayList<Node> result = new ArrayList<Node>();
-        for (final EtaResultSearch.EtaResultFetcher fetcher : fetchers) {
+        final ArrayList<Node> csos = new ArrayList<Node>();
+        for (final CsoByOverflowSearch.CsoFetcher fetcher : fetchers) {
             if (fetcher.getException() == null) {
-                result.addAll(fetcher.getResult());
+                csos.addAll(fetcher.getResult());
             } else {
                 LOG.error(
-                    "at least one EtaResultFetcher terminated abnormally, search unsuccessful, returning", // NOI18N
+                    "at least one CsoFetcher terminated abnormally, search unsuccessful, returning", // NOI18N
                     fetcher.getException());
 
                 return null;
             }
         }
 
-        return result;
+        return csos;
     }
 
     //~ Inner Classes ----------------------------------------------------------
@@ -154,7 +130,7 @@ public class EtaResultSearch extends CidsServerSearch {
      *
      * @version  $Revision$, $Date$
      */
-    private final class EtaResultFetcher implements Runnable {
+    private final class CsoFetcher implements Runnable {
 
         //~ Instance fields ----------------------------------------------------
 
@@ -171,7 +147,7 @@ public class EtaResultSearch extends CidsServerSearch {
          * @param  ms      DOCUMENT ME!
          * @param  domain  DOCUMENT ME!
          */
-        EtaResultFetcher(final MetaService ms, final String domain) {
+        CsoFetcher(final MetaService ms, final String domain) {
             this.ms = ms;
             this.domain = domain;
             this.exception = null;
@@ -205,37 +181,37 @@ public class EtaResultSearch extends CidsServerSearch {
                 final Object o = ms.performCustomSearch(STMT_TEST_SUDPLAN_SYSTEM);
             } catch (RemoteException ex) {
                 // we caught an exception so we ignore this server
-                LOG.info("EtaResultFetcher: ignoring server since test for sudplan system failed: " + domain, ex); // NOI18N
+                LOG.info("RunFetcher: ignoring server since test for sudplan system failed: " + domain, ex); // NOI18N
 
                 return;
             }
 
             final int csoClassId;
             try {
-                final MetaClass metaClass = ms.getClassByTableName(getUser(), "run"); // NOI18N
-                csoClassId = metaClass.getID();
+                final MetaClass csoClass = ms.getClassByTableName(getUser(), "linz_cso"); // NOI18N
+                csoClassId = csoClass.getID();
             } catch (final Exception ex) {
-                LOG.error("cannot fetch RUN metaclass (run)", ex);                    // NOI18N
+                LOG.error("cannot fetch CSO metaclass (linz_cso)", ex);                   // NOI18N
                 exception = ex;
 
                 return;
             }
 
             // now search for the runs
-            final int[] objectIds;
+            final int[] csoObjectIds;
             try {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug(etaResultStatement);
+                    LOG.debug(csosWithoutOverflowStatement);
                 }
-                final ArrayList<ArrayList> results = ms.performCustomSearch(etaResultStatement);
-                objectIds = new int[results.size()];
+                final ArrayList<ArrayList> results = ms.performCustomSearch(csosWithoutOverflowStatement);
+                csoObjectIds = new int[results.size()];
 
                 for (int i = 0; i < results.size(); ++i) {
                     final ArrayList al = results.get(i);
-                    objectIds[i] = (Integer)al.get(0);
+                    csoObjectIds[i] = (Integer)al.get(0);
                 }
             } catch (final Exception e) {
-                LOG.error("cannot fetch RUNs", e); // NOI18N
+                LOG.error("cannot fetch CSO", e); // NOI18N
                 exception = e;
 
                 return;
@@ -243,9 +219,9 @@ public class EtaResultSearch extends CidsServerSearch {
 
             // finally build cidsbeans from the results
             try {
-                for (final int objectId : objectIds) {
-                    final MetaObject object = ms.getMetaObject(getUser(), objectId, csoClassId);
-                    final Node node = new MetaObjectNode(object.getBean());
+                for (final int csoObjectId : csoObjectIds) {
+                    final MetaObject run = ms.getMetaObject(getUser(), csoObjectId, csoClassId);
+                    final Node node = new MetaObjectNode(run.getBean());
                     result.add(node);
                 }
             } catch (final Exception e) {

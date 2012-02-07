@@ -24,9 +24,9 @@ import java.util.Map;
  * <br/>
  * Achtung: Funktioniert nicht, keine create & update stements in der Suche!
  *
- * @author   Pascal Dihé
- * @version  $Revision$, $Date$
- * @deprecated
+ * @author      Pascal Dihé
+ * @version     $Revision$, $Date$
+ * @deprecated  DOCUMENT ME!
  */
 public class CreateCsoOverflowVolumeStatement extends CidsServerSearch {
 
