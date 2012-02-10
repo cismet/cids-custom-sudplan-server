@@ -41,14 +41,15 @@ public class CsoByOverflowSearch extends CidsServerSearch {
     //~ Static fields/initializers ---------------------------------------------
 
     private static final transient Logger LOG = Logger.getLogger(CsoByOverflowSearch.class);
-    private static final String STMT_TEST_SUDPLAN_SYSTEM = "SELECT c.id, r.id, s.id "
+    private static final String STMT_TEST_SUDPLAN_SYSTEM = "SELECT DISTINCT c.id, r.id, s.id "
                 + "FROM linz_cso c, run r, linz_swmm_result s "
                 + "LIMIT 1";
-    private static final String STMT_CSO_BY_OVERFLOW_TEMPLATE = "SELECT CSO.id FROM \"public\".linz_cso AS CSO "
-                + "JOIN \"public\".linz_swmm_scenarios AS SWMM_RUN ON CSO.id = SWMM_RUN.linz_cso_reference "
-                + "JOIN \"public\".linz_swmm_result AS SWMM_RESULT ON SWMM_RESULT.id = SWMM_RUN.linz_swmm_result "
-                + "AND SWMM_RESULT.overflow_frequency <= %OVERFLOW% "
+    private static final String STMT_CSO_BY_OVERFLOW_TEMPLATE = "SELECT DISTINCT  SWMM_RUN.linz_cso_reference  "
+                + "FROM \"public\".linz_swmm_scenarios SWMM_RUN, \"public\".linz_swmm_result SWMM_RESULT "
+                + "WHERE SWMM_RESULT.id = SWMM_RUN.linz_swmm_result  "
+                + "AND SWMM_RESULT.overflow_volume <= %OVERFLOW% "
                 + "AND SWMM_RESULT.swmm_scenario_id = ";
+
     public static final String DOMAIN = "SUDPLAN";
 
     //~ Instance fields --------------------------------------------------------

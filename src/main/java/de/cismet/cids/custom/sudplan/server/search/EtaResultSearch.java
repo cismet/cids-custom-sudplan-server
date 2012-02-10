@@ -43,11 +43,12 @@ public class EtaResultSearch extends CidsServerSearch {
                 + "FROM linz_eta_result e, run r, linz_swmm_run s "
                 + "LIMIT 1";
     private static final String STMT_ETA_RESULT_TEMPLATE =
-        "SELECT DISTINCT ETA_RESULT.eta_scenario_id from \"public\".linz_eta_result ETA_RESULT, \"public\".linz_swmm_run SWMM_RUN "
-                + "WHERE SWMM_RUN.swmm_scenario = ETA_RESULT.swmm_scenario_id "
+        "SELECT DISTINCT ETA_RESULT.eta_scenario_id FROM \"public\".linz_eta_result ETA_RESULT "
+                + "RIGHT OUTER JOIN \"public\".run AS RUN ON ETA_RESULT.eta_scenario_id = RUN.id "
+                + "JOIN \"public\".linz_swmm_run AS SWMM_RUN ON SWMM_RUN.swmm_scenario = ETA_RESULT.swmm_scenario_id "
                 + "AND SWMM_RUN.swmm_project_reference = ";
     private static final String STMT_ETA_HYD_CLAUSE = " AND ETA_RESULT.eta_hyd_actual >= ETA_RESULT.eta_hyd_required ";
-    private static final String STMT_ETA_SED_CLAUSE = " AND  ETA_RESULT.eta_sed_actual >= ETA_RESULT.eta_sed_required ";
+    private static final String STMT_ETA_SED_CLAUSE = " AND ETA_RESULT.eta_sed_actual >= ETA_RESULT.eta_sed_required ";
     public static final int NONE = 0;
     public static final int ETA_HYD = 1;
     public static final int ETA_SED = 2;
@@ -245,8 +246,12 @@ public class EtaResultSearch extends CidsServerSearch {
             try {
                 for (final int objectId : objectIds) {
                     final MetaObject object = ms.getMetaObject(getUser(), objectId, csoClassId);
-                    final Node node = new MetaObjectNode(object.getBean());
-                    result.add(node);
+                    if (object != null) {
+                        final Node node = new MetaObjectNode(object.getBean());
+                        result.add(node);
+                    } else {
+                        LOG.warn("no run found for id " + objectId);
+                    }
                 }
             } catch (final Exception e) {
                 LOG.error("cannot create metaobjects from found results", e); // NOI18N
