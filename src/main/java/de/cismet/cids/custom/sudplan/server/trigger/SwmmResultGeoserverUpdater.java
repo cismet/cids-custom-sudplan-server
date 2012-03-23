@@ -28,9 +28,6 @@ public class SwmmResultGeoserverUpdater {
     //~ Static fields/initializers ---------------------------------------------
 
     public static final Logger LOG = Logger.getLogger(SwmmResultGeoserverUpdater.class);
-    // public static final String GEOSERVER_HOST_PROPERTY = "sudplan.geoserver-host";
-    // public static final String GEOSERVER_DBURL_PROPERTY = "sudplan.geoserver-dburl";
-    public static final String DOMAIN = "SUDPLAN";
     public static final String CREATE_VIEW_STATEMENT_TEMPLATE = "CREATE OR REPLACE VIEW %VIEW% AS "
                 + "SELECT CSO.\"name\", SWMM_RESULT.\"name\" AS \"scenario_name\", (swmm_result.overflow_volume+0.5)::int AS overflow_volume, GEOM.geo_field AS \"geom\" FROM \"public\".linz_cso CSO "
                 + "JOIN \"public\".geom AS GEOM ON GEOM.id = CSO.geom AND GEOM.geo_field IS NOT NULL "
@@ -55,15 +52,6 @@ public class SwmmResultGeoserverUpdater {
                 + "  AXIS[&quot;Geodetic longitude&quot;, EAST], "
                 + "   AXIS[&quot;Geodetic latitude&quot;, NORTH], "
                 + "   AUTHORITY[&quot;EPSG&quot;,&quot;4326&quot;]]";
-//        public static final String CRS = "GEOGCS[\"WGS 84\", "
-//                    + "   DATUM[\"World Geodetic System 1984\", "
-//                    + "     SPHEROID[\"WGS 84\", 6378137.0, 298.257223563, AUTHORITY[\"EPSG\",\"7030\"]], "
-//                    + "     AUTHORITY[\"EPSG\",\"6326\"]], "
-//                    + "   PRIMEM[\"Greenwich\", 0.0, AUTHORITY[\"EPSG\",\"8901\"]], "
-//                    + "   UNIT[\"degree\", 0.017453292519943295], "
-//                    + "  AXIS[\"Geodetic longitude\", EAST], "
-//                    + "   AXIS[\"Geodetic latitude\", NORTH], "
-//                    + "   AUTHORITY[\"EPSG\",\"4326\"]]";
     public static final String SRS = "EPSG:4326";
 
     //~ Instance fields --------------------------------------------------------
@@ -83,7 +71,6 @@ public class SwmmResultGeoserverUpdater {
     public SwmmResultGeoserverUpdater(final Connection dbConnection) {
         restUser = "admin";
         restPassword = "cismetz12";
-        // restUrl = "http://sudplan.cismet.de/geoserver/";
         restUrl = "http://sudplanwp6.cismet.de/geoserver/";
         this.dbConnection = dbConnection;
     }

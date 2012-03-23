@@ -38,7 +38,7 @@ public class SwmmResultViewTrigger extends AbstractDBAwareCidsTrigger {
     private static final transient Logger LOG = Logger.getLogger(SwmmResultViewTrigger.class);
     public static final String CLASS = "MODELOUTPUT";
     public static final int MODEL = 12; // SWMM Model
-    public static final String DOMAIN = "SUDPLAN";
+    public static final String DOMAIN = "SUDPLAN-LINZ";
 
     //~ Instance fields --------------------------------------------------------
 
