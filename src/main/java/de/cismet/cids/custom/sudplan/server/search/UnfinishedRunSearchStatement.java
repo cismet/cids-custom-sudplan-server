@@ -36,7 +36,8 @@ public final class UnfinishedRunSearchStatement extends CidsServerSearch {
 
     //~ Static fields/initializers ---------------------------------------------
 
-    private static final String STMT_SEARCH_UNFINISHED_RUNS = "SELECT id FROM run WHERE finished IS NULL"; // NOI18N
+    private static final String STMT_SEARCH_UNFINISHED_RUNS =
+        "SELECT id FROM run WHERE finished IS NULL AND started IS NOT NULL"; // NOI18N
     private static final String STMT_TEST_SUDPLAN_SYSTEM = "SELECT r.id, mi.id, mo.id, m.id "
                 + "FROM run r, modelinput mi, modeloutput mo, model m "
                 + "LIMIT 1";
