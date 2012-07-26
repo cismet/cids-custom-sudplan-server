@@ -199,4 +199,16 @@ public class TimeSeriesDeletionTrigger extends AbstractCidsTrigger {
     public int compareTo(final CidsTrigger t) {
         return -1;
     }
+
+    @Override
+    public void afterCommittedInsert(final CidsBean cidsBean, final User user) {
+    }
+
+    @Override
+    public void afterCommittedUpdate(final CidsBean cidsBean, final User user) {
+    }
+
+    @Override
+    public void afterCommittedDelete(final CidsBean cidsBean, final User user) {
+    }
 }
