@@ -50,7 +50,7 @@ public class CsoByOverflowSearch extends CidsServerSearch {
                 + "AND SWMM_RESULT.overflow_volume <= %OVERFLOW% "
                 + "AND SWMM_RESULT.swmm_scenario_id = ";
 
-    public static final String DOMAIN = "SUDPLAN";
+    // public static final String DOMAIN = "SUDPLAN";
 
     //~ Instance fields --------------------------------------------------------
 
