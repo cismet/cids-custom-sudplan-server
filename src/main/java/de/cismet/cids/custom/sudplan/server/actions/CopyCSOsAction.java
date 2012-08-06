@@ -19,6 +19,9 @@ import org.apache.log4j.Logger;
 
 import java.rmi.RemoteException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.cismet.cids.server.actions.ServerAction;
 import de.cismet.cids.server.actions.ServerActionParameter;
 
@@ -55,8 +58,6 @@ public class CopyCSOsAction implements ServerAction, MetaServiceStore, UserStore
 
     @Override
     public Object execute(final Object body, final ServerActionParameter... params) {
-        LOG.info("executing '" + CSO_SERVER_ACTION + "' server action");
-
         int oldSwmmProjectId = -1;
         int newSwmmProjectId = -1;
         for (final ServerActionParameter parameter : params) {
@@ -80,9 +81,13 @@ public class CopyCSOsAction implements ServerAction, MetaServiceStore, UserStore
             }
         }
 
+        LOG.info("executing '" + CSO_SERVER_ACTION + "' server action with SWMM Project #"
+                    + oldSwmmProjectId + " and new SWMM Project #" + newSwmmProjectId);
         if ((oldSwmmProjectId < 0) || (newSwmmProjectId < 0)
                     || (this.getMetaService() == null)
                     || (this.getUser() == null)) {
+            LOG.warn("could not execute '" + CSO_SERVER_ACTION + "' server action: SWMM Project ("
+                        + oldSwmmProjectId + ") or SWMM Project (" + newSwmmProjectId + ") not set (-1)");
             return null;
         }
 
@@ -112,7 +117,7 @@ public class CopyCSOsAction implements ServerAction, MetaServiceStore, UserStore
         if (LOG.isDebugEnabled()) {
             LOG.debug(originalCSOs.length + " CSOs found associated to SWMM project #" + oldSwmmProjectId);
         }
-        final MetaObject[] copiedCSOs = new MetaObject[originalCSOs.length];
+        final List<MetaObject> copiedCSOs = new ArrayList<MetaObject>(originalCSOs.length);
         int i = 0;
         int successful = 0;
         for (final MetaObject originalCSO : originalCSOs) {
@@ -136,18 +141,24 @@ public class CopyCSOsAction implements ServerAction, MetaServiceStore, UserStore
 
             try {
                 metaService.insertMetaObject(user, copiedCSO);
-                copiedCSOs[i] = copiedCSO;
+                copiedCSOs.add(copiedCSO);
                 successful++;
             } catch (RemoteException ex) {
                 LOG.error("could not copy CSO '" + originalCSO.getName() + "'", ex);
-                copiedCSOs[i] = null;
             }
-
             i++;
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug(successful + " CSOs successfully copied");
+
+        if (successful < i) {
+            LOG.warn("only " + successful + " out of " + i + " CSOs successfully copied from SWMM Project #"
+                        + oldSwmmProjectId + "to SWMM Project #" + newSwmmProjectId);
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.info(successful + " CSOs successfully copied from SWMM Project #"
+                            + oldSwmmProjectId + "to SWMM Project #" + newSwmmProjectId);
+            }
         }
+
         return copiedCSOs;
     }
 
