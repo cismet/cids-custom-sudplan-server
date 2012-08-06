@@ -8,10 +8,6 @@
 package de.cismet.cids.custom.sudplan.server.search;
 
 import Sirius.server.middleware.interfaces.domainserver.MetaService;
-import Sirius.server.middleware.types.MetaClass;
-import Sirius.server.middleware.types.MetaObject;
-import Sirius.server.middleware.types.MetaObjectNode;
-import Sirius.server.middleware.types.Node;
 import Sirius.server.search.CidsServerSearch;
 
 import org.apache.log4j.Logger;
@@ -22,8 +18,6 @@ import java.rmi.RemoteException;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -41,9 +35,6 @@ public class LightwightSwmmProjectsSearch extends CidsServerSearch {
     //~ Static fields/initializers ---------------------------------------------
 
     private static final transient Logger LOG = Logger.getLogger(LightwightSwmmProjectsSearch.class);
-    private static final String STMT_TEST_SUDPLAN_SYSTEM = "SELECT DISTINCT c.id, r.id, s.id "
-                + "FROM linz_cso c, run r, linz_swmm_result s "
-                + "LIMIT 1";
     private static final String STMT_SWMM_PROJECTS =
         "SELECT id, title, description, inp_file_name FROM \"public\".swmm_project";
 
@@ -71,6 +62,8 @@ public class LightwightSwmmProjectsSearch extends CidsServerSearch {
             LOG.error("user domain '" + domain + "' not supported!");
             return null;
         }
+
+        LOG.info("searching for SWMM projects in domain '" + domain + "'");
 
         final ExecutorService searcher = Executors.newCachedThreadPool(
                 SudplanConcurrency.createThreadFactory(searchName)); // NOI18N
@@ -121,6 +114,8 @@ public class LightwightSwmmProjectsSearch extends CidsServerSearch {
 
                 swmmProjects.add(lightwightSwmmProject);
             }
+
+            LOG.info(swmmProjects.size() + " SWMM Projects found in domain '" + domain + "'");
 
             return swmmProjects;
         } else {
@@ -184,17 +179,15 @@ public class LightwightSwmmProjectsSearch extends CidsServerSearch {
 
         @Override
         public void run() {
-            // test if the server is a sudplan compatible server and has at least one entry in every relevant table
             try {
-                final Object o = ms.performCustomSearch(STMT_TEST_SUDPLAN_SYSTEM);
-            } catch (RemoteException ex) {
-                // we caught an exception so we ignore this server
-                LOG.info("SwmmProjectFetcher: ignoring server since test for sudplan system failed: " + domain, ex); // NOI18N
-                return;
-            }
-
-            try {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("executing SQL Statement \n" + STMT_SWMM_PROJECTS);
+                }
+                final long start = System.currentTimeMillis();
                 final ArrayList<ArrayList> searchResult = ms.performCustomSearch(STMT_SWMM_PROJECTS);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("SQL Statement took " + ((System.currentTimeMillis() - start) / 1000) + "s");
+                }
                 this.result = searchResult;
             } catch (RemoteException ex) {
                 this.exception = ex;
