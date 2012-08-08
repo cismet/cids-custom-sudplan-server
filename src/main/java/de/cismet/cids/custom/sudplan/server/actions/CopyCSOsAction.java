@@ -108,11 +108,15 @@ public class CopyCSOsAction implements ServerAction, MetaServiceStore, UserStore
         if (LOG.isDebugEnabled()) {
             LOG.debug("executing SQL statement: \n" + sb);
         }
+        final long start = System.currentTimeMillis();
         try {
             originalCSOs = this.metaService.getMetaObject(user, sb.toString());
         } catch (RemoteException ex) {
             LOG.error("could not retrieve CSO meta objects from query '" + sb + "'", ex);
             return null;
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("SQL Statement took " + ((System.currentTimeMillis() - start) / 1000) + "s");
         }
         if (LOG.isDebugEnabled()) {
             LOG.debug(originalCSOs.length + " CSOs found associated to SWMM project #" + oldSwmmProjectId);
@@ -151,7 +155,7 @@ public class CopyCSOsAction implements ServerAction, MetaServiceStore, UserStore
 
         if (successful < i) {
             LOG.warn("only " + successful + " out of " + i + " CSOs successfully copied from SWMM Project #"
-                        + oldSwmmProjectId + "to SWMM Project #" + newSwmmProjectId);
+                        + oldSwmmProjectId + " to SWMM Project #" + newSwmmProjectId);
         } else {
             if (LOG.isDebugEnabled()) {
                 LOG.info(successful + " CSOs successfully copied from SWMM Project #"

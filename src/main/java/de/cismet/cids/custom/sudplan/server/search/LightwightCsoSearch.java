@@ -35,8 +35,8 @@ public class LightwightCsoSearch extends CidsServerSearch {
     //~ Static fields/initializers ---------------------------------------------
 
     private static final transient Logger LOG = Logger.getLogger(LightwightCsoSearch.class);
-    private static final transient String STMT_TEST_SUDPLAN_SYSTEM = "SELECT DISTINCT c.id, r.id, s.id "
-                + "FROM linz_cso c, run r, linz_swmm_result s "
+    private static final transient String STMT_TEST_SUDPLAN_SYSTEM = "SELECT DISTINCT r.id, s.id "
+                + "FROM run r, linz_swmm_result s "
                 + "LIMIT 1";
     private static final transient String STMT_CSOS = "SELECT id, name FROM \"public\".linz_cso WHERE swmm_project = ";
 
@@ -188,7 +188,14 @@ public class LightwightCsoSearch extends CidsServerSearch {
 
             final String statement = STMT_CSOS + swmmProjectId;
             try {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("executing SQL Statement \n" + statement);
+                }
+                final long start = System.currentTimeMillis();
                 final ArrayList<ArrayList> searchResult = ms.performCustomSearch(statement);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("SQL Statement took " + (System.currentTimeMillis() - start) + "ms");
+                }
                 this.result = searchResult;
             } catch (RemoteException ex) {
                 this.exception = ex;
