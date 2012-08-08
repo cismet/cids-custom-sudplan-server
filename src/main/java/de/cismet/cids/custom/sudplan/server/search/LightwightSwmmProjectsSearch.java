@@ -186,7 +186,7 @@ public class LightwightSwmmProjectsSearch extends CidsServerSearch {
                 final long start = System.currentTimeMillis();
                 final ArrayList<ArrayList> searchResult = ms.performCustomSearch(STMT_SWMM_PROJECTS);
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("SQL Statement took " + ((System.currentTimeMillis() - start) / 1000) + "s");
+                    LOG.debug("SQL Statement took " + (System.currentTimeMillis() - start) + "ms");
                 }
                 this.result = searchResult;
             } catch (RemoteException ex) {
