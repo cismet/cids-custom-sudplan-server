@@ -43,8 +43,8 @@ public class LightwightCsoSearch extends CidsServerSearch {
     //~ Instance fields --------------------------------------------------------
 
     protected final transient String searchName = "lightwight-cso-search";
-    private final transient String domain;
-    private final transient int swmmProjectId;
+    private final String domain;
+    private final int swmmProjectId;
 
     //~ Constructors -----------------------------------------------------------
 
@@ -63,6 +63,9 @@ public class LightwightCsoSearch extends CidsServerSearch {
 
     @Override
     public Collection<LightwightCso> performServerSearch() {
+        LOG.info("performing custom search for CSOs for SWMM project #" + swmmProjectId
+                    + " from domain '" + domain + "'");
+
         if (!this.getActiveLoaclServers().containsKey(domain)) {
             LOG.error("user domain '" + domain + "' not supported!");
             return null;

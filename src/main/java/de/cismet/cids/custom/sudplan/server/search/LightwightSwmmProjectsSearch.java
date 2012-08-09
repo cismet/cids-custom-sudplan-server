@@ -58,12 +58,11 @@ public class LightwightSwmmProjectsSearch extends CidsServerSearch {
 
     @Override
     public Collection<LightwightSwmmProject> performServerSearch() {
+        LOG.info("searching for SWMM projects in domain '" + domain + "'");
         if (!this.getActiveLoaclServers().containsKey(domain)) {
             LOG.error("user domain '" + domain + "' not supported!");
             return null;
         }
-
-        LOG.info("searching for SWMM projects in domain '" + domain + "'");
 
         final ExecutorService searcher = Executors.newCachedThreadPool(
                 SudplanConcurrency.createThreadFactory(searchName)); // NOI18N
