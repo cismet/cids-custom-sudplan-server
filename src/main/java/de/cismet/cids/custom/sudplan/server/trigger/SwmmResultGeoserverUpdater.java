@@ -18,6 +18,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
+import de.cismet.tools.PasswordEncrypter;
 import de.cismet.tools.PropertyReader;
 
 /**
@@ -73,7 +74,9 @@ public class SwmmResultGeoserverUpdater {
      */
     public SwmmResultGeoserverUpdater(final Connection dbConnection) {
         restUser = propertyReader.getProperty("restUser");
-        restPassword = propertyReader.getProperty("restPassword");
+        restPassword = PasswordEncrypter.decrypt(
+                    propertyReader.getProperty("restPassword").toCharArray(),
+                    true).toString();
         restUrl = propertyReader.getProperty("restUrl");
         this.dbConnection = dbConnection;
     }
