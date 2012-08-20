@@ -132,15 +132,15 @@ public class SwmmResultViewTrigger extends AbstractDBAwareCidsTrigger {
         return -1;
     }
 
-//    @Override
-//    public void afterCommittedInsert(final CidsBean cidsBean, final User user) {
-//    }
-//
-//    @Override
-//    public void afterCommittedUpdate(final CidsBean cidsBean, final User user) {
-//    }
-//
-//    @Override
-//    public void afterCommittedDelete(final CidsBean cidsBean, final User user) {
-//    }
+    @Override
+    public void afterCommittedInsert(final CidsBean cidsBean, final User user) {
+    }
+
+    @Override
+    public void afterCommittedUpdate(final CidsBean cidsBean, final User user) {
+    }
+
+    @Override
+    public void afterCommittedDelete(final CidsBean cidsBean, final User user) {
+    }
 }

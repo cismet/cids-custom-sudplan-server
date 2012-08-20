@@ -11,11 +11,14 @@ import it.geosolutions.geoserver.rest.GeoServerRESTPublisher;
 import it.geosolutions.geoserver.rest.encoder.GSLayerEncoder;
 import it.geosolutions.geoserver.rest.encoder.GSResourceEncoder;
 
+import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+
+import de.cismet.tools.PropertyReader;
 
 /**
  * DOCUMENT ME!
@@ -28,31 +31,31 @@ public class SwmmResultGeoserverUpdater {
     //~ Static fields/initializers ---------------------------------------------
 
     public static final Logger LOG = Logger.getLogger(SwmmResultGeoserverUpdater.class);
-    public static final String CREATE_VIEW_STATEMENT_TEMPLATE = "CREATE OR REPLACE VIEW %VIEW% AS "
-                + "SELECT CSO.\"name\", SWMM_RESULT.\"name\" AS \"scenario_name\", (swmm_result.overflow_volume+0.5)::int AS overflow_volume, GEOM.geo_field AS \"geom\" FROM \"public\".linz_cso CSO "
-                + "JOIN \"public\".geom AS GEOM ON GEOM.id = CSO.geom AND GEOM.geo_field IS NOT NULL "
-                + "JOIN \"public\".linz_swmm_scenarios AS SWMM_RUN ON CSO.id = SWMM_RUN.linz_cso_reference "
-                + "JOIN \"public\".linz_swmm_result AS SWMM_RESULT ON SWMM_RESULT.id = SWMM_RUN.linz_swmm_result AND SWMM_RESULT.swmm_scenario_id = ";
-    public static final String GEOSERVER_DATASTORE = "sudplan_linz";
-    public static final String GEOSERVER_WORKSPACE = "sudplan";
-    public static final String GEOSERVER_SLD = "swmm_result";
-    public static final String VIEW_NAME_BASE = "view_swmm_result_";
-    public static final String BB_QUERY = " select "
-                + " ST_XMIN(st_extent(geom)) as lat_lon_xmin,"
-                + " ST_YMIN(st_extent(geom)) as lat_lon_ymin,"
-                + " ST_XMAX(st_extent(geom)) as lat_lon_xmax,"
-                + " ST_YMAX(st_extent(geom)) as lat_lon_ymax"
-                + " from " + VIEW_NAME_BASE;
-    public static final String CRS = "GEOGCS[&quot;WGS 84&quot;, "
-                + "   DATUM[&quot;World Geodetic System 1984&quot;, "
-                + "     SPHEROID[&quot;WGS 84&quot;, 6378137.0, 298.257223563, AUTHORITY[&quot;EPSG&quot;,&quot;7030&quot;]], "
-                + "     AUTHORITY[&quot;EPSG&quot;,&quot;6326&quot;]], "
-                + "   PRIMEM[&quot;Greenwich&quot;, 0.0, AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]], "
-                + "   UNIT[&quot;degree&quot;, 0.017453292519943295], "
-                + "  AXIS[&quot;Geodetic longitude&quot;, EAST], "
-                + "   AXIS[&quot;Geodetic latitude&quot;, NORTH], "
-                + "   AUTHORITY[&quot;EPSG&quot;,&quot;4326&quot;]]";
-    public static final String SRS = "EPSG:4326";
+
+    private static final PropertyReader propertyReader;
+    private static final String FILE_PROPERTY = "/de/cismet/cids/custom/sudplan/server/trigger/geoserver.properties";
+
+    public static final String CREATE_VIEW_STATEMENT_TEMPLATE;
+    public static final String GEOSERVER_DATASTORE;
+    public static final String GEOSERVER_WORKSPACE;
+    public static final String GEOSERVER_SLD;
+    public static final String VIEW_NAME_BASE;
+    public static final String BB_QUERY;
+    public static final String CRS;
+    public static final String SRS;
+
+    static {
+        BasicConfigurator.configure();
+        propertyReader = new PropertyReader(FILE_PROPERTY);
+        CREATE_VIEW_STATEMENT_TEMPLATE = propertyReader.getProperty("CREATE_VIEW_STATEMENT_TEMPLATE");
+        GEOSERVER_DATASTORE = propertyReader.getProperty("GEOSERVER_DATASTORE");
+        GEOSERVER_WORKSPACE = propertyReader.getProperty("GEOSERVER_WORKSPACE");
+        GEOSERVER_SLD = propertyReader.getProperty("GEOSERVER_SLD");
+        VIEW_NAME_BASE = propertyReader.getProperty("VIEW_NAME_BASE");
+        BB_QUERY = propertyReader.getProperty("BB_QUERY") + VIEW_NAME_BASE;
+        CRS = propertyReader.getProperty("CRS");
+        SRS = propertyReader.getProperty("SRS");
+    }
 
     //~ Instance fields --------------------------------------------------------
 
@@ -69,9 +72,9 @@ public class SwmmResultGeoserverUpdater {
      * @param  dbConnection  DOCUMENT ME!
      */
     public SwmmResultGeoserverUpdater(final Connection dbConnection) {
-        restUser = "admin";
-        restPassword = "cismetz12";
-        restUrl = "http://sudplanwp6.cismet.de/geoserver/";
+        restUser = propertyReader.getProperty("restUser");
+        restPassword = propertyReader.getProperty("restPassword");
+        restUrl = propertyReader.getProperty("restUrl");
         this.dbConnection = dbConnection;
     }
 
@@ -107,7 +110,8 @@ public class SwmmResultGeoserverUpdater {
     public void importToGeoServer(final int swmmRunId,
             final String swmmRunName) throws Exception {
         final String viewName = VIEW_NAME_BASE + swmmRunId;
-        LOG.info("creating view '" + viewName + "' for SWMM RUN '" + swmmRunName + "'");
+        LOG.info("creating view '" + viewName + "' for SWMM RUN '" + swmmRunName
+                    + "' on geoserver instance '" + this.restUrl + "'");
 
         final String createViewSQL = (CREATE_VIEW_STATEMENT_TEMPLATE.replaceAll("%VIEW%", String.valueOf(viewName)))
                     + swmmRunId + ';';
@@ -194,7 +198,6 @@ public class SwmmResultGeoserverUpdater {
         LOG.info("publishing layer '" + swmmRunName + "' to geoserver " + this.restUrl);
         if (!publisher.publishDBLayer(GEOSERVER_WORKSPACE, GEOSERVER_DATASTORE, featureType, layer)) {
             final String message = "GeoServer import of swmm result '" + swmmRunName + "' was not successful";
-            LOG.error(message);
             throw new Exception(message);
         }
 
