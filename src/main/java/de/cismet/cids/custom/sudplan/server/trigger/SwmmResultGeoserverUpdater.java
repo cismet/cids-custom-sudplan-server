@@ -46,7 +46,6 @@ public class SwmmResultGeoserverUpdater {
     public static final String SRS;
 
     static {
-        BasicConfigurator.configure();
         propertyReader = new PropertyReader(FILE_PROPERTY);
         CREATE_VIEW_STATEMENT_TEMPLATE = propertyReader.getProperty("CREATE_VIEW_STATEMENT_TEMPLATE");
         GEOSERVER_DATASTORE = propertyReader.getProperty("GEOSERVER_DATASTORE");
