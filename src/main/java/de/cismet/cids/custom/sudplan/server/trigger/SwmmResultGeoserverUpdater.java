@@ -73,9 +73,9 @@ public class SwmmResultGeoserverUpdater {
      */
     public SwmmResultGeoserverUpdater(final Connection dbConnection) {
         restUser = propertyReader.getProperty("restUser");
-        restPassword = PasswordEncrypter.decrypt(
+        restPassword = String.valueOf(PasswordEncrypter.decrypt(
                     propertyReader.getProperty("restPassword").toCharArray(),
-                    true).toString();
+                    true));
         restUrl = propertyReader.getProperty("restUrl");
         this.dbConnection = dbConnection;
     }
