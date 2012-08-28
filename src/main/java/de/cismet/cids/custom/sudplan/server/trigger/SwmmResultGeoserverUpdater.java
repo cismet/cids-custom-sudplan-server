@@ -11,7 +11,6 @@ import it.geosolutions.geoserver.rest.GeoServerRESTPublisher;
 import it.geosolutions.geoserver.rest.encoder.GSLayerEncoder;
 import it.geosolutions.geoserver.rest.encoder.GSResourceEncoder;
 
-import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
 import java.sql.Connection;
@@ -42,8 +41,6 @@ public class SwmmResultGeoserverUpdater {
     public static final String GEOSERVER_SLD;
     public static final String VIEW_NAME_BASE;
     public static final String BB_QUERY;
-    public static final String CRS;
-    public static final String SRS;
 
     static {
         propertyReader = new PropertyReader(FILE_PROPERTY);
@@ -53,8 +50,6 @@ public class SwmmResultGeoserverUpdater {
         GEOSERVER_SLD = propertyReader.getProperty("GEOSERVER_SLD");
         VIEW_NAME_BASE = propertyReader.getProperty("VIEW_NAME_BASE");
         BB_QUERY = propertyReader.getProperty("BB_QUERY") + VIEW_NAME_BASE;
-        CRS = propertyReader.getProperty("CRS");
-        SRS = propertyReader.getProperty("SRS");
     }
 
     //~ Instance fields --------------------------------------------------------
@@ -133,7 +128,7 @@ public class SwmmResultGeoserverUpdater {
         featureType.setName(viewName); // view name
         featureType.setTitle(swmmRunName);
         featureType.setEnabled(true);
-        featureType.setSRS(SRS);
+        featureType.setSRS("EPSG:4326");
         featureType.setProjectionPolicy(GSResourceEncoder.ProjectionPolicy.FORCE_DECLARED);
 
         GSAttributeEncoder attribute = new GSAttributeEncoder();
@@ -181,17 +176,17 @@ public class SwmmResultGeoserverUpdater {
             throw new Exception(message);
         }
 
-        featureType.setNativeBoundingBox(result.getDouble("lat_lon_xmin"),
-            result.getDouble("lat_lon_ymin"),
-            result.getDouble("lat_lon_xmax"),
-            result.getDouble("lat_lon_ymax"),
-            CRS);
+//        featureType.setNativeBoundingBox(result.getDouble("lat_lon_xmin"),
+//            result.getDouble("lat_lon_ymin"),
+//            result.getDouble("lat_lon_xmax"),
+//            result.getDouble("lat_lon_ymax"),
+//            CRS);
 
         featureType.setLatLonBoundingBox(result.getDouble("lat_lon_xmin"),
             result.getDouble("lat_lon_ymin"),
             result.getDouble("lat_lon_xmax"),
             result.getDouble("lat_lon_ymax"),
-            CRS);
+            "EPSG:4326");
 
         final GSLayerEncoder layer = new GSLayerEncoder();
         layer.setEnabled(true);
