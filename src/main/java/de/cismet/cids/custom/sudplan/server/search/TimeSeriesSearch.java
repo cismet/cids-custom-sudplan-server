@@ -16,20 +16,23 @@ import java.text.MessageFormat;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * TimeSeriesSearch is utilized for finding TimeSeries records having the specified name.
+ * TimeSeriesSearch is utilized for finding TimeSeries records having the specified name. It searches in every available
+ * domain as the current storage for timeseries is centralised.
  *
  * @author   Benjamin Friedrich (benjamin.friedrich@cismet.de)
- * @version  1.0, 04.01.2012
+ * @author   Martin Scholl (martin.scholl@cismet.de)
+ * @version  1.1, 07.09.2012
  */
 public final class TimeSeriesSearch extends CidsServerSearch {
 
     //~ Static fields/initializers ---------------------------------------------
 
     private static final String QUERY = "select id from timeseries where name = ''{0}''"; // NOI18N
-
-    private static final String DOMAIN = "SUDPLAN"; // NOI18N
 
     //~ Instance fields --------------------------------------------------------
 
@@ -47,11 +50,11 @@ public final class TimeSeriesSearch extends CidsServerSearch {
      */
     public TimeSeriesSearch(final String name) {
         if (name == null) {
-            throw new NullPointerException("Name must not be null");
+            throw new NullPointerException("Name must not be null"); // NOI18N
         }
 
         if (name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Name must not be empty");
+            throw new IllegalArgumentException("Name must not be empty"); // NOI18N
         }
 
         this.name = name;
@@ -61,26 +64,39 @@ public final class TimeSeriesSearch extends CidsServerSearch {
 
     @Override
     public Collection performServerSearch() {
-        final MetaService ms = (MetaService)getActiveLoaclServers().get(DOMAIN);
+        final Map<String, MetaService> mss = getActiveLoaclServers();
 
-        if (ms != null) {
-            try {
-                final String query = MessageFormat.format(
-                        QUERY,
-                        this.name);
+        try {
+            final String query = MessageFormat.format(QUERY, this.name);
 
-                if (getLog().isDebugEnabled()) {
-                    getLog().debug("query: " + query); // NOI18N
-                }
-                final ArrayList<ArrayList> lists = ms.performCustomSearch(query);
-                return lists;
-            } catch (RemoteException ex) {
-                getLog().error(ex.getMessage(), ex);
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("query: " + query); // NOI18N
             }
-        } else {
-            getLog().error("active local server not found"); // NOI18N
-        }
 
-        return null;
+            final List<Map<String, List<? extends List>>> lists = new ArrayList<Map<String, List<? extends List>>>(
+                    mss.size());
+
+            for (final String domain : mss.keySet()) {
+                final MetaService ms = mss.get(domain);
+
+                if (ms != null) {
+                    final ArrayList<ArrayList> timeseries = ms.performCustomSearch(query);
+
+                    if ((timeseries != null) && !timeseries.isEmpty()) {
+                        if (lists.isEmpty()) {
+                            lists.add(new HashMap<String, List<? extends List>>());
+                        }
+                        lists.get(0).put(domain, timeseries);
+                    }
+                }
+            }
+
+            return lists;
+        } catch (final RemoteException ex) {
+            final String message = "cannot perform time series search"; // NOI18N
+            getLog().error(message, ex);
+
+            throw new IllegalStateException(message, ex); // NOI18N
+        }
     }
 }
