@@ -41,6 +41,7 @@ public class SwmmResultGeoserverUpdater {
     public static final String GEOSERVER_SLD;
     public static final String VIEW_NAME_BASE;
     public static final String BB_QUERY;
+    public static final String WMS_PATH;
 
     static {
         propertyReader = new PropertyReader(FILE_PROPERTY);
@@ -50,6 +51,7 @@ public class SwmmResultGeoserverUpdater {
         GEOSERVER_SLD = propertyReader.getProperty("GEOSERVER_SLD");
         VIEW_NAME_BASE = propertyReader.getProperty("VIEW_NAME_BASE");
         BB_QUERY = propertyReader.getProperty("BB_QUERY") + VIEW_NAME_BASE;
+        WMS_PATH = propertyReader.getProperty("WMS_PATH");
     }
 
     //~ Instance fields --------------------------------------------------------
@@ -191,6 +193,7 @@ public class SwmmResultGeoserverUpdater {
         final GSLayerEncoder layer = new GSLayerEncoder();
         layer.setEnabled(true);
         layer.setDefaultStyle(GEOSERVER_SLD);
+        layer.setWmsPath(WMS_PATH);
 
         LOG.info("publishing layer '" + swmmRunName + "' to geoserver " + this.restUrl);
         if (!publisher.publishDBLayer(GEOSERVER_WORKSPACE, GEOSERVER_DATASTORE, featureType, layer)) {
