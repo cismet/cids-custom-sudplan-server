@@ -132,10 +132,10 @@ public class CopyCSOsAction implements ServerAction, MetaServiceStore, UserStore
             }
 
             for (final ObjectAttribute orignalAttribute : originalCSO.getAttribs()) {
-                final String attributeName = orignalAttribute.getName();
-                if (!("id".equals(attributeName))
-                            && !(SWMM_RESULT_PROPERTY.equals(attributeName))) {
-                    if (SWMM_PROJECT_PROPERTY.equals(attributeName)) {
+                final String attributeId = orignalAttribute.getMai().getFieldName();
+                if (!(csoClass.getPrimaryKey().equalsIgnoreCase(attributeId))
+                            && !(SWMM_RESULT_PROPERTY.equalsIgnoreCase(attributeId))) {
+                    if (SWMM_PROJECT_PROPERTY.equalsIgnoreCase(attributeId)) {
                         orignalAttribute.setValue(newSwmmProjectId);
                     }
 
