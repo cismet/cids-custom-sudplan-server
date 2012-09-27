@@ -38,10 +38,12 @@ public class CopyCSOsAction implements ServerAction, MetaServiceStore, UserStore
 
     public static final transient String PARAMETER_OLD_PROJECT = "oldSwmmProjectId";
     public static final transient String PARAMETER_NEW_PROJECT = "newSwmmProjectId";
+    public static final transient String PARAMETER_NEW_PROJECT_NAME = "newSwmmProjectName";
     public static final transient String CSO_SERVER_ACTION = "copyCSOs";
     public static final transient String TABLENAME_CSOS = "linz_cso";
     public static final transient String SWMM_RESULT_PROPERTY = "swmm_results";
     public static final transient String SWMM_PROJECT_PROPERTY = "swmm_project";
+    public static final transient String SWMM_PROJECT_NAME_PROPERTY = "swmm_project_name";
     private static final transient Logger LOG = Logger.getLogger(CopyCSOsAction.class);
 
     //~ Instance fields --------------------------------------------------------
@@ -60,21 +62,24 @@ public class CopyCSOsAction implements ServerAction, MetaServiceStore, UserStore
     public Object execute(final Object body, final ServerActionParameter... params) {
         int oldSwmmProjectId = -1;
         int newSwmmProjectId = -1;
+        String newSwmmProjectName = "";
         for (final ServerActionParameter parameter : params) {
             if (PARAMETER_OLD_PROJECT.equals(parameter.getKey())) {
                 try {
                     oldSwmmProjectId = Integer.valueOf(parameter.getValue());
                 } catch (Throwable t) {
-                    LOG.error("could, not convert value of action parameter '"
+                    LOG.error("could not convert value of action parameter '"
                                 + PARAMETER_OLD_PROJECT + "' to int", t);
                 }
             } else if (PARAMETER_NEW_PROJECT.equals(parameter.getKey())) {
                 try {
                     newSwmmProjectId = Integer.valueOf(parameter.getValue());
                 } catch (Throwable t) {
-                    LOG.error("could, not convert value of action parameter '"
+                    LOG.error("could not convert value of action parameter '"
                                 + PARAMETER_NEW_PROJECT + "' to int", t);
                 }
+            } else if (PARAMETER_NEW_PROJECT_NAME.equals(parameter.getKey())) {
+                newSwmmProjectName = (parameter.getValue() != null) ? parameter.getValue().toString() : "";
             } else {
                 LOG.error("unsupported server action parameter " + parameter.getKey()
                             + " = " + parameter.getValue());
@@ -137,6 +142,8 @@ public class CopyCSOsAction implements ServerAction, MetaServiceStore, UserStore
                             && !(SWMM_RESULT_PROPERTY.equalsIgnoreCase(attributeId))) {
                     if (SWMM_PROJECT_PROPERTY.equalsIgnoreCase(attributeId)) {
                         orignalAttribute.setValue(newSwmmProjectId);
+                    } else if (SWMM_PROJECT_NAME_PROPERTY.equalsIgnoreCase(attributeId)) {
+                        orignalAttribute.setValue(newSwmmProjectName);
                     }
 
                     copiedCSO.addAttribute(orignalAttribute);
@@ -159,7 +166,8 @@ public class CopyCSOsAction implements ServerAction, MetaServiceStore, UserStore
         } else {
             if (LOG.isDebugEnabled()) {
                 LOG.info(successful + " CSOs successfully copied from SWMM Project #"
-                            + oldSwmmProjectId + "to SWMM Project #" + newSwmmProjectId);
+                            + oldSwmmProjectId + "to SWMM Project #" + newSwmmProjectId
+                            + " (" + newSwmmProjectName + ")");
             }
         }
 
