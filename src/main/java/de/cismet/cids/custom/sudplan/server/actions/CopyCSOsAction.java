@@ -66,14 +66,14 @@ public class CopyCSOsAction implements ServerAction, MetaServiceStore, UserStore
         for (final ServerActionParameter parameter : params) {
             if (PARAMETER_OLD_PROJECT.equals(parameter.getKey())) {
                 try {
-                    oldSwmmProjectId = Integer.valueOf(parameter.getValue());
+                    oldSwmmProjectId = Integer.valueOf(parameter.getValue().toString());
                 } catch (Throwable t) {
                     LOG.error("could not convert value of action parameter '"
                                 + PARAMETER_OLD_PROJECT + "' to int", t);
                 }
             } else if (PARAMETER_NEW_PROJECT.equals(parameter.getKey())) {
                 try {
-                    newSwmmProjectId = Integer.valueOf(parameter.getValue());
+                    newSwmmProjectId = Integer.valueOf(parameter.getValue().toString());
                 } catch (Throwable t) {
                     LOG.error("could not convert value of action parameter '"
                                 + PARAMETER_NEW_PROJECT + "' to int", t);
