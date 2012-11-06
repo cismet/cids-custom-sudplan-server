@@ -8,7 +8,6 @@
 package de.cismet.cids.custom.sudplan.server.search;
 
 import Sirius.server.middleware.interfaces.domainserver.MetaService;
-import Sirius.server.search.CidsServerSearch;
 
 import org.apache.log4j.Logger;
 
@@ -24,13 +23,15 @@ import java.util.concurrent.TimeUnit;
 
 import de.cismet.cids.custom.sudplan.commons.SudplanConcurrency;
 
+import de.cismet.cids.server.search.AbstractCidsServerSearch;
+
 /**
  * DOCUMENT ME!
  *
  * @author   Pascal Dihé
  * @version  $Revision$, $Date$
  */
-public class LightwightCsoSearch extends CidsServerSearch {
+public class LightwightCsoSearch extends AbstractCidsServerSearch {
 
     //~ Static fields/initializers ---------------------------------------------
 
@@ -66,14 +67,14 @@ public class LightwightCsoSearch extends CidsServerSearch {
         LOG.info("performing custom search for CSOs for SWMM project #" + swmmProjectId
                     + " from domain '" + domain + "'");
 
-        if (!this.getActiveLoaclServers().containsKey(domain)) {
+        if (!this.getActiveLocalServers().containsKey(domain)) {
             LOG.error("user domain '" + domain + "' not supported!");
             return null;
         }
 
         final ExecutorService searcher = Executors.newCachedThreadPool(
                 SudplanConcurrency.createThreadFactory(searchName)); // NOI18N
-        final MetaService ms = (MetaService)this.getActiveLoaclServers().get(domain);
+        final MetaService ms = (MetaService)this.getActiveLocalServers().get(domain);
         final LightwightCsoSearch.CsoFetcher fetcher = new LightwightCsoSearch.CsoFetcher(ms, domain);
 
         searcher.submit(fetcher);

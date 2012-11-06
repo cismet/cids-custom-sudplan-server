@@ -10,7 +10,6 @@ package de.cismet.cids.custom.sudplan.server.search;
 import Sirius.server.middleware.interfaces.domainserver.MetaService;
 import Sirius.server.middleware.types.MetaClass;
 import Sirius.server.middleware.types.MetaObject;
-import Sirius.server.search.CidsServerSearch;
 
 import org.apache.log4j.Logger;
 
@@ -26,13 +25,15 @@ import java.util.concurrent.TimeUnit;
 
 import de.cismet.cids.custom.sudplan.commons.SudplanConcurrency;
 
+import de.cismet.cids.server.search.AbstractCidsServerSearch;
+
 /**
  * DOCUMENT ME!
  *
  * @author   martin.scholl@cismet.de
  * @version  $Revision$, $Date$
  */
-public final class UnfinishedRunSearchStatement extends CidsServerSearch {
+public final class UnfinishedRunSearchStatement extends AbstractCidsServerSearch {
 
     //~ Static fields/initializers ---------------------------------------------
 
@@ -51,7 +52,7 @@ public final class UnfinishedRunSearchStatement extends CidsServerSearch {
         final ExecutorService searcher = Executors.newCachedThreadPool(
                 SudplanConcurrency.createThreadFactory("unfinished-run-search")); // NOI18N
 
-        final Map map = getActiveLoaclServers();
+        final Map map = getActiveLocalServers();
         final ArrayList<RunFetcher> fetchers = new ArrayList<RunFetcher>(map.size());
         for (final Object o : map.keySet()) {
             final String domain = (String)o;
