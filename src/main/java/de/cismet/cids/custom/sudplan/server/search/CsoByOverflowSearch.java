@@ -11,8 +11,6 @@ import Sirius.server.middleware.interfaces.domainserver.MetaService;
 import Sirius.server.middleware.types.MetaClass;
 import Sirius.server.middleware.types.MetaObject;
 import Sirius.server.middleware.types.MetaObjectNode;
-import Sirius.server.middleware.types.Node;
-import Sirius.server.search.CidsServerSearch;
 
 import org.apache.log4j.Logger;
 
@@ -30,13 +28,16 @@ import java.util.concurrent.TimeUnit;
 
 import de.cismet.cids.custom.sudplan.commons.SudplanConcurrency;
 
+import de.cismet.cids.server.search.AbstractCidsServerSearch;
+import de.cismet.cids.server.search.MetaObjectNodeServerSearch;
+
 /**
  * DOCUMENT ME!
  *
  * @author   pd
  * @version  $Revision$, $Date$
  */
-public class CsoByOverflowSearch extends CidsServerSearch {
+public class CsoByOverflowSearch extends AbstractCidsServerSearch implements MetaObjectNodeServerSearch {
 
     //~ Static fields/initializers ---------------------------------------------
 
@@ -76,11 +77,11 @@ public class CsoByOverflowSearch extends CidsServerSearch {
     //~ Methods ----------------------------------------------------------------
 
     @Override
-    public Collection performServerSearch() {
+    public Collection<MetaObjectNode> performServerSearch() {
         final ExecutorService searcher = Executors.newCachedThreadPool(
                 SudplanConcurrency.createThreadFactory(searchName)); // NOI18N
 
-        final Map map = getActiveLoaclServers();
+        final Map map = getActiveLocalServers();
         final ArrayList<CsoByOverflowSearch.CsoFetcher> fetchers = new ArrayList<CsoByOverflowSearch.CsoFetcher>(
                 map.size());
         for (final Object o : map.keySet()) {
@@ -108,7 +109,7 @@ public class CsoByOverflowSearch extends CidsServerSearch {
             return null;
         }
 
-        final ArrayList<Node> csos = new ArrayList<Node>();
+        final ArrayList<MetaObjectNode> csos = new ArrayList<MetaObjectNode>();
         for (final CsoByOverflowSearch.CsoFetcher fetcher : fetchers) {
             if (fetcher.getException() == null) {
                 csos.addAll(fetcher.getResult());
@@ -137,7 +138,7 @@ public class CsoByOverflowSearch extends CidsServerSearch {
 
         private final transient MetaService ms;
         private final transient String domain;
-        private final transient List<Node> result;
+        private final transient List<MetaObjectNode> result;
         private transient Exception exception;
 
         //~ Constructors -------------------------------------------------------
@@ -152,7 +153,7 @@ public class CsoByOverflowSearch extends CidsServerSearch {
             this.ms = ms;
             this.domain = domain;
             this.exception = null;
-            this.result = new ArrayList<Node>();
+            this.result = new ArrayList<MetaObjectNode>();
         }
 
         //~ Methods ------------------------------------------------------------
@@ -162,7 +163,7 @@ public class CsoByOverflowSearch extends CidsServerSearch {
          *
          * @return  DOCUMENT ME!
          */
-        List<Node> getResult() {
+        List<MetaObjectNode> getResult() {
             return result;
         }
 
@@ -222,7 +223,7 @@ public class CsoByOverflowSearch extends CidsServerSearch {
             try {
                 for (final int csoObjectId : csoObjectIds) {
                     final MetaObject run = ms.getMetaObject(getUser(), csoObjectId, csoClassId);
-                    final Node node = new MetaObjectNode(run.getBean());
+                    final MetaObjectNode node = new MetaObjectNode(run.getBean());
                     result.add(node);
                 }
             } catch (final Exception e) {

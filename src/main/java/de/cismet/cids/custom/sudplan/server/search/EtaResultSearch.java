@@ -11,8 +11,6 @@ import Sirius.server.middleware.interfaces.domainserver.MetaService;
 import Sirius.server.middleware.types.MetaClass;
 import Sirius.server.middleware.types.MetaObject;
 import Sirius.server.middleware.types.MetaObjectNode;
-import Sirius.server.middleware.types.Node;
-import Sirius.server.search.CidsServerSearch;
 
 import org.apache.log4j.Logger;
 
@@ -28,13 +26,16 @@ import java.util.concurrent.TimeUnit;
 
 import de.cismet.cids.custom.sudplan.commons.SudplanConcurrency;
 
+import de.cismet.cids.server.search.AbstractCidsServerSearch;
+import de.cismet.cids.server.search.MetaObjectNodeServerSearch;
+
 /**
  * DOCUMENT ME!
  *
  * @author   pd
  * @version  $Revision$, $Date$
  */
-public class EtaResultSearch extends CidsServerSearch {
+public class EtaResultSearch extends AbstractCidsServerSearch implements MetaObjectNodeServerSearch {
 
     //~ Static fields/initializers ---------------------------------------------
 
@@ -100,11 +101,11 @@ public class EtaResultSearch extends CidsServerSearch {
     //~ Methods ----------------------------------------------------------------
 
     @Override
-    public Collection performServerSearch() {
+    public Collection<MetaObjectNode> performServerSearch() {
         final ExecutorService searcher = Executors.newCachedThreadPool(
                 SudplanConcurrency.createThreadFactory("eta-result-search")); // NOI18N
 
-        final Map map = getActiveLoaclServers();
+        final Map map = getActiveLocalServers();
         final ArrayList<EtaResultSearch.EtaResultFetcher> fetchers = new ArrayList<EtaResultSearch.EtaResultFetcher>(
                 map.size());
         for (final Object o : map.keySet()) {
@@ -132,7 +133,7 @@ public class EtaResultSearch extends CidsServerSearch {
             return null;
         }
 
-        final ArrayList<Node> result = new ArrayList<Node>();
+        final ArrayList<MetaObjectNode> result = new ArrayList<MetaObjectNode>();
         for (final EtaResultSearch.EtaResultFetcher fetcher : fetchers) {
             if (fetcher.getException() == null) {
                 result.addAll(fetcher.getResult());
@@ -161,7 +162,7 @@ public class EtaResultSearch extends CidsServerSearch {
 
         private final transient MetaService ms;
         private final transient String domain;
-        private final transient List<Node> result;
+        private final transient List<MetaObjectNode> result;
         private transient Exception exception;
 
         //~ Constructors -------------------------------------------------------
@@ -176,7 +177,7 @@ public class EtaResultSearch extends CidsServerSearch {
             this.ms = ms;
             this.domain = domain;
             this.exception = null;
-            this.result = new ArrayList<Node>();
+            this.result = new ArrayList<MetaObjectNode>();
         }
 
         //~ Methods ------------------------------------------------------------
@@ -186,7 +187,7 @@ public class EtaResultSearch extends CidsServerSearch {
          *
          * @return  DOCUMENT ME!
          */
-        List<Node> getResult() {
+        List<MetaObjectNode> getResult() {
             return result;
         }
 
@@ -247,7 +248,7 @@ public class EtaResultSearch extends CidsServerSearch {
                 for (final int objectId : objectIds) {
                     final MetaObject object = ms.getMetaObject(getUser(), objectId, csoClassId);
                     if (object != null) {
-                        final Node node = new MetaObjectNode(object.getBean());
+                        final MetaObjectNode node = new MetaObjectNode(object.getBean());
                         result.add(node);
                     } else {
                         LOG.warn("no run found for id " + objectId);

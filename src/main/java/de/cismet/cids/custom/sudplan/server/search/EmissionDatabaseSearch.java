@@ -10,20 +10,26 @@ package de.cismet.cids.custom.sudplan.server.search;
 import Sirius.server.middleware.interfaces.domainserver.MetaService;
 import Sirius.server.middleware.types.MetaClass;
 import Sirius.server.middleware.types.MetaObject;
-import Sirius.server.search.CidsServerSearch;
+
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
+
+import de.cismet.cids.server.search.AbstractCidsServerSearch;
 
 /**
  * Provides all uploaded emission databases with name, description and geometry.
  *
  * @version  $Revision$, $Date$
  */
-public final class EmissionDatabaseSearch extends CidsServerSearch {
+public final class EmissionDatabaseSearch extends AbstractCidsServerSearch {
 
     //~ Static fields/initializers ---------------------------------------------
+
+    /** LOGGER. */
+    private static final transient Logger LOG = Logger.getLogger(EmissionDatabaseSearch.class);
 
     private static final String DOMAIN = "SUDPLAN";                                                 // NOI18N
     private static final String CIDSCLASS = "emission_database";                                    // NOI18N
@@ -33,10 +39,10 @@ public final class EmissionDatabaseSearch extends CidsServerSearch {
 
     @Override
     public Collection performServerSearch() {
-        final MetaService metaService = (MetaService)getActiveLoaclServers().get(DOMAIN);
+        final MetaService metaService = (MetaService)getActiveLocalServers().get(DOMAIN);
 
         if (metaService == null) {
-            getLog().error("Active local server not found. Aborting search."); // NOI18N
+            LOG.error("Active local server not found. Aborting search."); // NOI18N
             return null;
         }
 
@@ -45,7 +51,7 @@ public final class EmissionDatabaseSearch extends CidsServerSearch {
             final MetaClass metaClass = metaService.getClassByTableName(getUser(), CIDSCLASS); // NOI18N
             classId = metaClass.getID();
         } catch (final Exception ex) {
-            getLog().error("Can't fetch meta class. Aborting search.", ex);                    // NOI18N
+            LOG.error("Can't fetch meta class. Aborting search.", ex);                         // NOI18N
             return null;
         }
 
@@ -59,7 +65,7 @@ public final class EmissionDatabaseSearch extends CidsServerSearch {
                 objectIds[i] = (Integer)result.get(0);
             }
         } catch (final Exception e) {
-            getLog().error("Can't fetch emission databases. Aborting search.", e); // NOI18N
+            LOG.error("Can't fetch emission databases. Aborting search.", e); // NOI18N
             return null;
         }
 
@@ -70,7 +76,7 @@ public final class EmissionDatabaseSearch extends CidsServerSearch {
                 result.add(metaObject);
             }
         } catch (final Exception e) {
-            getLog().error("Can't create meta objects from found results. Aborting search.", e); // NOI18N
+            LOG.error("Can't create meta objects from found results. Aborting search.", e); // NOI18N
             return null;
         }
 

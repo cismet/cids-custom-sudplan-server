@@ -8,7 +8,6 @@
 package de.cismet.cids.custom.sudplan.server.search;
 
 import Sirius.server.middleware.interfaces.domainserver.MetaService;
-import Sirius.server.search.CidsServerSearch;
 
 import org.apache.log4j.Logger;
 
@@ -24,13 +23,15 @@ import java.util.concurrent.TimeUnit;
 
 import de.cismet.cids.custom.sudplan.commons.SudplanConcurrency;
 
+import de.cismet.cids.server.search.AbstractCidsServerSearch;
+
 /**
  * DOCUMENT ME!
  *
  * @author   Pascal Dihé
  * @version  $Revision$, $Date$
  */
-public class LightwightSwmmProjectsSearch extends CidsServerSearch {
+public class LightwightSwmmProjectsSearch extends AbstractCidsServerSearch {
 
     //~ Static fields/initializers ---------------------------------------------
 
@@ -59,14 +60,14 @@ public class LightwightSwmmProjectsSearch extends CidsServerSearch {
     @Override
     public Collection<LightwightSwmmProject> performServerSearch() {
         LOG.info("searching for SWMM projects in domain '" + domain + "'");
-        if (!this.getActiveLoaclServers().containsKey(domain)) {
+        if (!this.getActiveLocalServers().containsKey(domain)) {
             LOG.error("user domain '" + domain + "' not supported!");
             return null;
         }
 
         final ExecutorService searcher = Executors.newCachedThreadPool(
                 SudplanConcurrency.createThreadFactory(searchName)); // NOI18N
-        final MetaService ms = (MetaService)this.getActiveLoaclServers().get(domain);
+        final MetaService ms = (MetaService)this.getActiveLocalServers().get(domain);
         final LightwightSwmmProjectsSearch.SwmmProjectFetcher fetcher =
             new LightwightSwmmProjectsSearch.SwmmProjectFetcher(ms, domain);
 
